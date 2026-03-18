@@ -78,7 +78,7 @@ bash ~/.openclaw/workspace/skills/exec-autoapprove/scripts/install.sh
 
 ## 🎬 GIF 演示（零审批模式）
 
-![AutoApprove Demo](https://tenor.com/zh-CN/view/reckless-%E6%AF%9B%E5%AD%90-%E4%BD%A0%E7%9C%8B%E4%BD%A0%E5%AA%BD%E5%91%A2-%E4%BD%A0%E7%9C%8B%E4%BD%A0%E5%A6%88%E5%91%A2-gif-13901487010300367154)
+![AutoApprove Demo](reckless.gif)
 
 ---
 
