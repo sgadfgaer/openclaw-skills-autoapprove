@@ -1,5 +1,10 @@
 # ⚡️ OpenClaw Exec Auto‑Approve
 
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![OpenClaw](https://img.shields.io/badge/OpenClaw-2026.3.13%2B-blue)
+![Platform](https://img.shields.io/badge/Platform-Linux-informational)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
+
 > **告别审批弹窗，一键全放行。**
 > 你只管跑命令，剩下的交给它。🚀
 
@@ -7,14 +12,32 @@
 
 ---
 
-## 🔥 你为什么需要它（激进版）
+## 🔬 为什么需要它（高阶版·论文式说明）
 
-- ✅ **再也不弹 Exec Approval**：从此没有“确认/允许/再点一次”的噩梦
-- ✅ **一键解锁生产力**：所有常用工具自动放行，流程不再被打断
-- ✅ **后台自动跟进**：新工具第一次出现，自动加入白名单
-- ✅ **立刻见效**：安装完成即生效，网关自动重启
+### 1) 现实痛点（Problem Statement）
+- **高频审批打断执行流**：每次 Exec Approval 都在打断心流，累积成本极高。
+- **工具链增长导致白名单维护失控**：新工具不断增加，审批滞后阻断自动化。
+- **审批依赖人工确认**：在连续任务/批处理场景中，审批成为系统级瓶颈。
 
-> **如果你对“每个命令都要点批准”已经忍无可忍——这就是你的解药。** 😤
+### 2) 创新点（Innovation）
+- **自动化白名单治理**：一次性补齐常用路径 + 自动追踪新路径，消除手工维护。
+- **事件驱动式放行**：基于 `exec-approvals.json` 的变化事件，实时补全 allowlist。
+- **即时生效机制**：变更后自动触发网关重载，审批门槛即时降低。
+
+### 3) 架构模式（Architecture）
+> **“一次性补全 + 持续监听”双层架构**
+
+- **静态层（Bootstrap）**：`patch-allowlist.py` 预置常用路径，建立基线白名单。
+- **动态层（Watcher）**：`watcher.sh` 通过 inotify 监听，捕获新路径并自动放行。
+- **控制层（systemd user）**：保证 watcher 长驻运行，持续自动治理。
+
+### 4) 逻辑闭环（Logic Loop）
+1) OpenClaw 写入新的审批记录
+2) Watcher 监听到变更
+3) 自动补全 resolved path → 写入 allowlist
+4) 触发网关重载 → 立即生效
+
+**结论：** Exec 审批从“人工瓶颈”升级为“自动治理系统”。
 
 ---
 
@@ -49,6 +72,12 @@ bash ~/.openclaw/workspace/skills/exec-autoapprove/scripts/install.sh
 - **patch-allowlist.py**：把常用路径加入 allowlist
 - **watcher.sh**：监听 `exec-approvals.json`，自动放行新路径
 - **systemd user**：保证服务一直在后台运行
+
+---
+
+## 🎬 GIF 演示（零审批模式）
+
+![AutoApprove Demo](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2UxY2E2Y2U5NDQ4MDUzY2I3ZDA5ZTQ2MWM2OTk5N2JjZTIxYzAxMCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o7btPCcdNniyf0ArS/giphy.gif)
 
 ---
 
@@ -93,8 +122,7 @@ systemctl --user status openclaw-autoapprove
 
 ---
 
-## 📣 最后一句话（广告模式）
+## 📣 最后一句话（高大上版）
 
-**别再被审批弹窗驯化。**
-**把效率交还给你自己。**
-**装上它，解锁“零审批”的全速模式。** ⚡️
+**把审批从“人工摩擦”升级为“系统自治”。**
+**这是效率工程的最后一公里。** ⚡️
