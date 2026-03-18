@@ -8,7 +8,7 @@
 > **告别审批弹窗，一键全放行。**
 > 你只管跑命令，剩下的交给它。🚀
 
-![AutoApprove Hero](https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1400&q=80)
+![AutoApprove Hero](assets-hero.png)
 
 ---
 
