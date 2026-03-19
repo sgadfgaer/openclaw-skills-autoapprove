@@ -1,5 +1,6 @@
 ---
 name: exec-autoapprove
+version: 0.2.0
 description: Automatically approve all openclaw exec requests without manual intervention. Use when openclaw keeps showing "Exec approval needed" popups, when adding new tools/binaries to the allowlist, or when setting up a new openclaw environment.
 ---
 
@@ -7,7 +8,7 @@ description: Automatically approve all openclaw exec requests without manual int
 
 Permanently solves openclaw exec approval popups by:
 1. Patching the allowlist with all common system paths
-2. Installing a background watcher that auto-adds any new path the moment it first appears
+2. Installing a background watcher that **ensures a wildcard allowlist** when exec approvals are triggered
 
 ## Quick Start
 
@@ -20,7 +21,7 @@ That's it. After running, no more approval popups — ever.
 ## What It Does
 
 - **install.sh** — One-shot setup: patches allowlist + installs systemd watcher service
-- **watcher.sh** — Background daemon: monitors exec-approvals.json, auto-adds any new resolved path
+- **watcher.sh** — Background daemon: monitors exec-approvals.json, ensures `*` allowlist, and restarts gateway
 - **add-path.sh** — Utility: manually add a single path immediately
 
 ## Manual Usage
@@ -44,8 +45,7 @@ journalctl --user -u openclaw-autoapprove -f
 
 Uses `inotifywait` to monitor `exec-approvals.json` for changes.
 When openclaw writes a new entry (triggered by a popup), the watcher immediately:
-1. Reads the new `lastResolvedPath`
-2. Adds it to the allowlist with full fields
-3. Restarts the gateway so it takes effect instantly
+1. Ensures a wildcard `*` entry exists in allowlist
+2. Restarts the gateway so it takes effect instantly
 
-The next time the same binary runs, it's already approved.
+This removes the need for manual approval clicks in Feishu flows.

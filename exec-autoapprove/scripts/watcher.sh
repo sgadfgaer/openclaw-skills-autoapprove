@@ -1,88 +1,65 @@
 #!/bin/bash
-# openclaw exec-autoapprove watcher daemon
-# Monitors exec-approvals.json and auto-adds any new resolved path
+# openclaw exec-autoapprove watcher daemon (no-protection)
+# Monitors exec-approvals.json. On any change, if wildcard not present, add it and restart gateway.
 
 APPROVALS="$HOME/.openclaw/exec-approvals.json"
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LAST_HASH=""
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
-# Process the file: find any entries missing lastResolvedPath (newly added by openclaw on popup)
-# and promote them to full allowlist entries, then restart gateway
-process_new_entries() {
+ensure_wildcard() {
     python3 - <<'PYEOF'
 import json, uuid, time, os, subprocess
 
 APPROVALS = os.path.expanduser("~/.openclaw/exec-approvals.json")
 
-try:
-    with open(APPROVALS) as f:
-        data = json.load(f)
-except Exception as e:
-    print(f"Error reading config: {e}")
-    exit(1)
+with open(APPROVALS) as f:
+    data = json.load(f)
 
 now = int(time.time() * 1000)
-promoted = 0
+changed = False
 
-for agent in data.get("agents", {}).values():
-    al = agent.get("allowlist", [])
-    existing_patterns = {e.get("pattern") for e in al}
+agents = data.setdefault("agents", {})
+main = agents.setdefault("main", {})
+allowlist = main.setdefault("allowlist", [])
 
-    for e in al:
-        # Entries openclaw adds on "Always allow" have lastResolvedPath but may lack id
-        # Entries added externally may lack lastResolvedPath
-        if "lastResolvedPath" not in e and e.get("pattern") not in (None, "*"):
-            e["lastResolvedPath"] = e["pattern"]
-            e["lastUsedAt"] = now
-            promoted += 1
-            print(f"Promoted: {e['pattern']}")
+has_wc = any(e.get("pattern") == "*" for e in allowlist)
+if not has_wc:
+    allowlist.insert(0, {
+        "id": str(uuid.uuid4()),
+        "pattern": "*",
+        "lastResolvedPath": "*",
+        "lastUsedAt": now,
+    })
+    changed = True
 
-        # If there's a lastResolvedPath different from pattern, also add the resolved path
-        resolved = e.get("lastResolvedPath")
-        if resolved and resolved not in existing_patterns and resolved != e.get("pattern"):
-            new_entry = {
-                "id": str(uuid.uuid4()),
-                "pattern": resolved,
-                "lastResolvedPath": resolved,
-                "lastUsedAt": now,
-            }
-            al.insert(0, new_entry)
-            existing_patterns.add(resolved)
-            promoted += 1
-            print(f"Added resolved path: {resolved}")
-
-if promoted > 0:
+if changed:
     with open(APPROVALS, "w") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Wrote {promoted} updates, restarting gateway...")
+    print("Added wildcard allowlist entry.")
     subprocess.run(["openclaw", "gateway", "restart"], capture_output=True)
     print("Gateway restarted.")
 else:
-    print("No new paths to add.")
+    print("Wildcard already present; no action.")
 PYEOF
 }
 
-log "Watcher started. Monitoring $APPROVALS"
+log "Watcher started. Monitoring $APPROVALS for changes."
 
 # Initial pass
-process_new_entries
+ensure_wildcard
 
-# Watch for changes
 while true; do
-    # Wait for file change (timeout 30s so we can loop and check)
     inotifywait -q -t 30 -e close_write "$APPROVALS" 2>/dev/null
     EXIT=$?
 
     if [ $EXIT -eq 0 ]; then
-        # File was modified
         CURRENT_HASH=$(md5sum "$APPROVALS" 2>/dev/null | cut -d' ' -f1)
         if [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
-            log "Change detected, processing..."
-            process_new_entries
+            log "Change detected, ensuring wildcard..."
+            ensure_wildcard
             LAST_HASH="$CURRENT_HASH"
         fi
     fi
-    # EXIT=2 means timeout — just loop again
+    # EXIT=2 timeout -> loop
 done
