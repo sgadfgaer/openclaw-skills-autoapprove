@@ -51,7 +51,59 @@
 
 ## 🧠 Skill 版本号
 
-- **exec-autoapprove v0.1.0**
+- **exec-autoapprove v0.2.0**
+
+---
+
+## 🔧 本次配套 OpenClaw 配置变更（必须说明）
+
+为实现 **Feishu 场景无弹窗自动执行**，除了 skill 本体外，还涉及以下 OpenClaw 配置：
+
+### 1) `~/.openclaw/openclaw.json`
+
+```json
+"tools": {
+  "exec": { "security": "full", "ask": "off" }
+}
+```
+**作用**：关闭 exec 弹窗，允许自动执行。
+
+```json
+"plugins": { "allow": ["feishu"] }
+```
+**作用**：避免 feishu 插件重复加载导致 gateway 重启失败。
+
+### 2) `~/.openclaw/exec-approvals.json`
+
+```json
+"agents": {
+  "main": {
+    "security": "full",
+    "ask": "off",
+    "askFallback": "full"
+  }
+}
+```
+**作用**：审批文件层面的自动化放行策略对齐。
+
+> ⚠️ 注意：`tools.exec.security` 的优先级高于 `exec-approvals.json`。两者需一致，否则仍会被 allowlist 拒绝。
+
+---
+
+## 🧪 已验证结果（Feishu 场景）
+
+- 发布测试笔记成功：`✅ Note published successfully!`
+- **全流程无弹窗**，自动执行生效。
+
+---
+
+## 🩹 额外补丁说明（OpenClaw message poll 冲突）
+
+当 `message.send` 被错误判定为 poll 时，会报：
+```
+Poll fields require action "poll"
+```
+需要在 OpenClaw dist 里屏蔽该校验（详见复盘文档），否则飞书附件发送会被拦截。
 
 ---
 
