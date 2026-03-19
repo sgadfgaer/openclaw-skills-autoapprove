@@ -9,6 +9,10 @@
 ### Step 0. 目标确认
 - 目标：Feishu 场景 **无弹窗自动执行**（完全自动化）
 
+### Step 0.5 小红书发布前检查（必做）
+- 文案中**禁止出现转义符**（如 `\\n` 或 `/n`），必须用真实换行
+- **话题必须用 `tags` 参数提交**，正文里的 `#话题` 只会当作普通文本
+
 ### Step 1. 安装/更新 exec-autoapprove
 ```bash
 bash ~/.openclaw/workspace/skills/exec-autoapprove/scripts/install.sh
